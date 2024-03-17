@@ -1,5 +1,7 @@
 package com.example.springjwtbasic.config;
 
+import com.example.springjwtbasic.jwt.JWTFilter;
+import com.example.springjwtbasic.jwt.JWTUtil;
 import com.example.springjwtbasic.jwt.LoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final JWTUtil jwtUtil;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -46,7 +49,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
         http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
+                // LoginFilter 앞 부분에 filter 추가
+                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+        http
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
         http
                 // session을 무상태(stateless)로 적용한다.
                 .sessionManagement((session) -> session
